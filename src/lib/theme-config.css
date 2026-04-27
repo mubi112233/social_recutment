@@ -1,0 +1,36 @@
+/*
+ * Theme Configuration CSS Variables
+ * Current theme: blue-pink (SocialRecruit)
+ * Change theme in src/lib/theme-config.ts
+ */
+
+:root {
+  --background: 0 0% 100%;
+  --card: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --muted: 210 40% 96.1%;
+  --border: 214.3 31.8% 91.4%;
+  --primary: 217 91% 60%;
+  --primary-dark: 221 83% 53%;
+  --primary-light: 217 92% 75%;
+  --accent: 330 81% 90%;
+  --accent-dark: 330 81% 60%;
+  --accent-light: 330 81% 95%;
+  --destructive: 0 84.2% 60.2%;
+  --success: 142 76% 36%;
+  --warning: 45 93% 58%;
+  --brand-blue: 330 81% 60%;
+  --gold: 217 91% 60%;
+  --gold-dark: 221 83% 53%;
+  --gold-light: 217 92% 75%;
+
+  /* Gradients */
+  --gradient-gold: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(330 81% 60%) 100%);
+  --gradient-dark: linear-gradient(180deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 15%) 100%);
+
+  /* Shadows */
+  --shadow-gold: 0 10px 40px -10px hsl(217 91% 60% / 0.25);
+  --shadow-gold-lg: 0 25px 80px -20px hsl(217 91% 60% / 0.35);
+  --shadow-elegant: 0 20px 60px -15px hsl(215 25% 21% / 0.3);
+  --shadow-brutal: 8px 8px 0px hsl(217 91% 60%);
+}
