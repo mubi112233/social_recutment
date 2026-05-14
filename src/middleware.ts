@@ -16,8 +16,10 @@ export function middleware(request: NextRequest) {
   const browserLang = acceptLang.split(",")[0]?.toLowerCase() || "en";
   const isGermanBrowser = browserLang.startsWith("de") || browserLang.startsWith("ge");
 
-  // Determine locale preference
-  const preferredLocale = localeCookie || (isGermanBrowser ? "ge" : "en");
+  // Determine locale preference — use public URL segments (de/en), not internal ge
+  const preferredLocale = localeCookie
+    ? (localeCookie === "ge" ? "de" : localeCookie)
+    : (isGermanBrowser ? "de" : "en");
 
   // Handle root path redirect based on preference
   if (pathname === "/") {

@@ -73,6 +73,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
       alternates: { languages: href("/contact") },
     },
+    {
+      url: `${base}/en/case-studies`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+      alternates: { languages: href("/case-studies") },
+    },
+    {
+      url: `${base}/de/case-studies`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+      alternates: { languages: href("/case-studies") },
+    },
   ];
 
   let blogRoutes: MetadataRoute.Sitemap = [];
@@ -84,20 +98,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const enPosts = Array.isArray((enData as any)?.posts) ? (enData as any).posts : [];
     const gePosts = Array.isArray((geData as any)?.posts) ? (geData as any).posts : [];
     blogRoutes = [
-      ...enPosts.map((p: any) => ({
-        url: `${base}/en/blog/${p.slug || `${slugify(p.title)}-${p.blogId}`}`,
-        lastModified: p.publishedAt || p.updatedAt ? new Date(p.publishedAt || p.updatedAt) : now,
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      })),
-      ...gePosts.map((p: any) => ({
-        url: `${base}/de/blog/${p.slug || `${slugify(p.title)}-${p.blogId}`}`,
-        lastModified: p.publishedAt || p.updatedAt ? new Date(p.publishedAt || p.updatedAt) : now,
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      })),
+      ...enPosts.map((p: any) => {
+        const slug = p.slug || `${slugify(p.title)}-${p.blogId}`;
+        return {
+          url: `${base}/en/blog/${slug}`,
+          lastModified: p.publishedAt || p.updatedAt ? new Date(p.publishedAt || p.updatedAt) : now,
+          changeFrequency: "weekly" as const,
+          priority: 0.8,
+          alternates: { languages: href(`/blog/${slug}`) },
+        };
+      }),
+      ...gePosts.map((p: any) => {
+        const slug = p.slug || `${slugify(p.title)}-${p.blogId}`;
+        return {
+          url: `${base}/de/blog/${slug}`,
+          lastModified: p.publishedAt || p.updatedAt ? new Date(p.publishedAt || p.updatedAt) : now,
+          changeFrequency: "weekly" as const,
+          priority: 0.8,
+          alternates: { languages: href(`/blog/${slug}`) },
+        };
+      }),
     ];
-  } catch {}
+  } catch (err) {
+    console.error("[sitemap] Failed to fetch blog posts:", err);
+  }
 
   let caseRoutes: MetadataRoute.Sitemap = [];
   try {
@@ -108,20 +132,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const enStudies = Array.isArray((enData as any)?.caseStudies) ? (enData as any).caseStudies : [];
     const geStudies = Array.isArray((geData as any)?.caseStudies) ? (geData as any).caseStudies : [];
     caseRoutes = [
-      ...enStudies.map((s: any) => ({
-        url: `${base}/en/case-study/${slugify(s.title)}-${s.caseStudyId}`,
-        lastModified: s.updatedAt ? new Date(s.updatedAt) : now,
-        changeFrequency: "monthly" as const,
-        priority: 0.7,
-      })),
-      ...geStudies.map((s: any) => ({
-        url: `${base}/de/case-study/${slugify(s.title)}-${s.caseStudyId}`,
-        lastModified: s.updatedAt ? new Date(s.updatedAt) : now,
-        changeFrequency: "monthly" as const,
-        priority: 0.7,
-      })),
+      ...enStudies.map((s: any) => {
+        const slug = `${slugify(s.title)}-${s.caseStudyId}`;
+        return {
+          url: `${base}/en/case-study/${slug}`,
+          lastModified: s.updatedAt ? new Date(s.updatedAt) : now,
+          changeFrequency: "monthly" as const,
+          priority: 0.7,
+          alternates: { languages: href(`/case-study/${slug}`) },
+        };
+      }),
+      ...geStudies.map((s: any) => {
+        const slug = `${slugify(s.title)}-${s.caseStudyId}`;
+        return {
+          url: `${base}/de/case-study/${slug}`,
+          lastModified: s.updatedAt ? new Date(s.updatedAt) : now,
+          changeFrequency: "monthly" as const,
+          priority: 0.7,
+          alternates: { languages: href(`/case-study/${slug}`) },
+        };
+      }),
     ];
-  } catch {}
+  } catch (err) {
+    console.error("[sitemap] Failed to fetch case studies:", err);
+  }
 
   return [...staticRoutes, ...blogRoutes, ...caseRoutes];
 }

@@ -177,6 +177,7 @@ export default async function CaseStudyPage({
   const caseStudyJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
+    "genre": "Case Study",
     "headline": caseStudy.title,
     "description": caseStudy.challenge,
     "author": { "@type": "Organization", "name": "SocialRecruit", "url": SITE_URL },
@@ -198,7 +199,7 @@ export default async function CaseStudyPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(generateBreadcrumbSchema([
           { label: currentLang === 'ge' ? 'Startseite' : 'Home', href: `/${currentLang}` },
-          { label: currentLang === 'ge' ? 'Fallstudien' : 'Case Studies', href: `/${currentLang}/#case-studies` },
+          { label: currentLang === 'ge' ? 'Fallstudien' : 'Case Studies', href: `/${currentLang}/case-studies` },
           { label: caseStudy.company, href: `/${currentLang}/case-study/${slug}` },
         ])) }}
       />
@@ -209,7 +210,7 @@ export default async function CaseStudyPage({
             {currentLang === 'ge' ? 'Startseite' : 'Home'}
           </Link>
           <span className="mx-2">/</span>
-          <Link href={`/${currentLang}/#case-studies`} className="hover:text-foreground transition-colors">
+          <Link href={`/${currentLang}/case-studies`} className="hover:text-foreground transition-colors">
             {currentLang === 'ge' ? 'Fallstudien' : 'Case Studies'}
           </Link>
           <span className="mx-2">/</span>
@@ -218,7 +219,7 @@ export default async function CaseStudyPage({
 
         {/* Back button */}
         <Link
-          href={`/${currentLang}/#case-studies`}
+          href={`/${currentLang}/case-studies`}
           className="inline-flex items-center gap-2 mb-6 sm:mb-8 text-sm text-muted-foreground hover:text-gold transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -363,7 +364,7 @@ export default async function CaseStudyPage({
         {/* Back to case studies button */}
         <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-border/50 text-center">
           <Link
-            href={`/${currentLang}/#case-studies`}
+            href={`/${currentLang}/case-studies`}
             className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gold text-foreground text-sm sm:text-base font-semibold rounded-xl hover:bg-gold/90 transition-all hover:shadow-lg hover:scale-105 group"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />

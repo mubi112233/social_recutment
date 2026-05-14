@@ -102,15 +102,23 @@ export const metadata: Metadata = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
   name: "SocialRecruit",
   url: SITE_URL,
-  logo: absoluteUrl("/favicon.ico"),
+  logo: {
+    "@type": "ImageObject",
+    url: absoluteUrl("/og-image.jpg"),
+    width: 1200,
+    height: 630,
+  },
   description:
     "Social media recruitment agency specializing in talent acquisition through LinkedIn, Meta, TikTok, and professional networks for businesses in Germany and worldwide.",
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
     availableLanguage: ["English", "German"],
+    email: "hello@don-sr.com",
+    areaServed: ["DE", "AT", "CH", "Worldwide"],
   },
   areaServed: [
     { "@type": "Country", name: "Germany" },
@@ -118,16 +126,29 @@ const organizationJsonLd = {
     { "@type": "Country", name: "Switzerland" },
     { "@type": "Place", name: "Worldwide" },
   ],
-  sameAs: ["https://linkedin.com/company/socialrecruit", "https://twitter.com/socialrecruit", "https://instagram.com/socialrecruit"],
+  sameAs: [
+    "https://www.linkedin.com/company/don-sr",
+    "https://www.instagram.com/don.sr.official",
+    "https://www.tiktok.com/@don.sr.official",
+  ],
 };
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
   name: "SocialRecruit",
   url: SITE_URL,
   inLanguage: ["en-US", "de-DE"],
-  publisher: { "@type": "Organization", name: "SocialRecruit" },
+  publisher: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "SocialRecruit", url: SITE_URL },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/en/blog?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
 };
 
 // Service schema for recruitment services
@@ -197,16 +218,23 @@ const serviceJsonLd = {
 // LocalBusiness schema for Recruitment Agency
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": "EmploymentAgency",
+  "@type": ["EmploymentAgency", "ProfessionalService"],
+  "@id": `${SITE_URL}/#business`,
   name: "SocialRecruit",
   url: SITE_URL,
-  logo: absoluteUrl("/favicon.ico"),
+  logo: {
+    "@type": "ImageObject",
+    url: absoluteUrl("/og-image.jpg"),
+    width: 1200,
+    height: 630,
+  },
   image: absoluteUrl("/og-image.jpg"),
   description: "Social media recruitment agency specializing in talent acquisition through LinkedIn, Meta, TikTok, and professional networks",
+  email: "hello@don-sr.com",
   sameAs: [
-    "https://linkedin.com/company/socialrecruit",
-    "https://twitter.com/socialrecruit",
-    "https://instagram.com/socialrecruit",
+    "https://www.linkedin.com/company/don-sr",
+    "https://www.instagram.com/don.sr.official",
+    "https://www.tiktok.com/@don.sr.official",
   ],
   priceRange: "€€",
   openingHoursSpecification: [
@@ -216,6 +244,13 @@ const localBusinessJsonLd = {
       opens: "09:00",
       closes: "18:00",
     },
+  ],
+  knowsLanguage: ["en", "de"],
+  areaServed: [
+    { "@type": "Country", name: "Germany" },
+    { "@type": "Country", name: "Austria" },
+    { "@type": "Country", name: "Switzerland" },
+    { "@type": "Place", name: "Worldwide" },
   ],
 };
 
@@ -228,9 +263,6 @@ export default async function RootLayout({
   return (
     <html lang={htmlLang} suppressHydrationWarning className="font-sans">
       <head>
-        {/* Google Search Console Verification */}
-        <meta name="google-site-verification" content="5fFyGMS1mEaPePVNR1a8gVbMpeqBr9r-S6cR9x0bNEw" />
-        
         {/* Performance: Preconnect to external domains */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
