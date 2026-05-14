@@ -9,13 +9,7 @@
 const getApiBase = () =>
   process.env.NEXT_PUBLIC_API_BASE || "https://api.don-va.com";
 
-const getTenantId = () => {
-  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID || 'recruitment';
-  if (typeof window !== 'undefined') {
-    console.log('[API] Using Tenant ID:', tenantId);
-  }
-  return tenantId;
-};
+const getTenantId = () => process.env.NEXT_PUBLIC_TENANT_ID || 'recruitment';
 
 /**
  * Creates fetch options with proper headers including X-Tenant-ID
@@ -48,21 +42,7 @@ export async function fetchAPI(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${getApiBase()}${endpoint}`;
-  const fetchOptions = createFetchOptions(options);
-
-  // Log actual headers being sent
-  const headersObj: Record<string, string> = {};
-  if (fetchOptions.headers instanceof Headers) {
-    fetchOptions.headers.forEach((value: string, key: string) => {
-      headersObj[key] = value;
-    });
-  }
-
-  console.log('[API Server] Fetching:', url);
-  console.log('[API Server] Headers:', headersObj);
-  console.log('[API Server] Tenant ID from env:', process.env.NEXT_PUBLIC_TENANT_ID);
-
-  return fetch(url, fetchOptions);
+  return fetch(url, createFetchOptions(options));
 }
 
 /**
@@ -74,21 +54,7 @@ export async function fetchAPIClient(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${getApiBase()}${endpoint}`;
-  const fetchOptions = createFetchOptions(options);
-
-  // Log actual headers being sent
-  const headersObj: Record<string, string> = {};
-  if (fetchOptions.headers instanceof Headers) {
-    fetchOptions.headers.forEach((value, key) => {
-      headersObj[key] = value;
-    });
-  }
-
-  console.log('[API Client] Fetching:', url);
-  console.log('[API Client] Headers:', headersObj);
-  console.log('[API Client] Tenant ID from env:', process.env.NEXT_PUBLIC_TENANT_ID);
-
-  return fetch(url, fetchOptions);
+  return fetch(url, createFetchOptions(options));
 }
 
 /**
@@ -125,20 +91,15 @@ export async function fetchApiData<T>(
 ): Promise<T | null> {
   try {
     const url = buildApiUrl(endpoint, lang);
-    const tenantId = getTenantId();
-    console.log(`[fetchApiData] Endpoint: ${endpoint} | Lang: ${lang} | Tenant: ${tenantId}`);
-    const response = await fetchAPI(url, options);
-    
-    if (!response.ok) {
-      console.warn(`API request failed: ${response.status} ${response.statusText}`);
+    let response: Response;
+    try {
+      response = await fetchAPI(url, options);
+    } catch {
       return null;
     }
-
-    const data = await response.json();
-    console.log(`[fetchApiData] Response for ${endpoint}:`, data);
-    return data;
-  } catch (error) {
-    console.warn('Failed to fetch API data:', error);
+    if (!response.ok) return null;
+    try { return await response.json(); } catch { return null; }
+  } catch {
     return null;
   }
 }
@@ -153,20 +114,15 @@ export async function fetchApiDataClient<T>(
 ): Promise<T | null> {
   try {
     const url = buildApiUrl(endpoint, lang);
-    const tenantId = getTenantId();
-    console.log(`[fetchApiDataClient] Endpoint: ${endpoint} | Lang: ${lang} | Tenant: ${tenantId}`);
-    const response = await fetchAPIClient(url, options);
-    
-    if (!response.ok) {
-      console.warn(`API request failed: ${response.status} ${response.statusText}`);
+    let response: Response;
+    try {
+      response = await fetchAPIClient(url, options);
+    } catch {
       return null;
     }
-
-    const data = await response.json();
-    console.log(`[fetchApiDataClient] Response for ${endpoint}:`, data);
-    return data;
-  } catch (error) {
-    console.warn('Failed to fetch API data:', error);
+    if (!response.ok) return null;
+    try { return await response.json(); } catch { return null; }
+  } catch {
     return null;
   }
 }

@@ -19,6 +19,7 @@ import Link from "next/link";
 
 export default function BookMeetingClient() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -26,6 +27,7 @@ export default function BookMeetingClient() {
   const homePath = lang === "de" ? "/de" : "/en";
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -92,7 +94,7 @@ export default function BookMeetingClient() {
                 <Button
                   onClick={() =>
                     window.open(
-                      "https://calendly.com/mmubasharshahzad40/new-meeting",
+                      "https://calendly.com/d/cyhx-wdw-b57",
                       "_blank",
                       "noopener,noreferrer"
                     )
@@ -151,7 +153,7 @@ export default function BookMeetingClient() {
                     <Button
                       onClick={() => {
                         document
-                          .querySelector("iframe[title='Book a meeting']")
+                          .querySelector(".calendly-inline-widget")
                           ?.scrollIntoView({ behavior: "smooth" });
                         setMobileMenuOpen(false);
                       }}
@@ -265,12 +267,20 @@ export default function BookMeetingClient() {
           <div className="lg:col-span-3 order-first lg:order-last">
             <div className="lg:sticky lg:top-24">
               <div className="bg-card border border-border rounded-xl p-2 shadow-lg">
-                <iframe
-                  src="https://calendly.com/SocialRecruit/recruitment-consultation?embed_domain=don-sr.com&embed_type=Inline"
-                  className="rounded-lg"
-                  style={{ minWidth: "100%", height: "600px", border: "none" }}
-                  title="Book a meeting"
-                />
+                {mounted && (
+                  <>
+                    <div
+                      className="calendly-inline-widget rounded-lg"
+                      data-url="https://calendly.com/d/cyhx-wdw-b57?embed_type=Inline&hide_gdpr_banner=1"
+                      style={{ minWidth: "100%", height: "600px" }}
+                    />
+                    <script
+                      type="text/javascript"
+                      src="https://assets.calendly.com/assets/external/widget.js"
+                      async
+                    />
+                  </>
+                )}
               </div>
               <div className="mt-4 p-4 bg-blue-500/5 border border-blue-500/20 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">

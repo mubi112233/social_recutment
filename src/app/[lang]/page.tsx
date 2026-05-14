@@ -15,25 +15,11 @@ async function getHeroMeta(lang: string) {
   try {
     const data = await fetchApiData<{ hero: any | any[] }>(API_ENDPOINTS.HERO, normalizeLanguage(lang));
     if (!data?.hero) return null;
-
-    // Handle array response (multiple heroes)
     if (Array.isArray(data.hero)) {
-      // Prefer hero with metaTitle/metaDescription for SEO, then fall back to newest
       const withMeta = data.hero.find((h: any) => h.metaTitle || h.metaDescription);
-      if (withMeta) {
-        console.log(`[getHeroMeta] Found hero with SEO meta:`, withMeta._id);
-        return withMeta;
-      }
-      // Sort by _id (newest first - MongoDB ObjectId contains timestamp)
-      const sorted = data.hero.sort((a: any, b: any) => {
-        const idA = a._id || '';
-        const idB = b._id || '';
-        return idB.localeCompare(idA);
-      });
-      console.log(`[getHeroMeta] Found ${sorted.length} heroes, using newest:`, sorted[0]?._id);
-      return sorted[0] || null;
+      if (withMeta) return withMeta;
+      return data.hero.sort((a: any, b: any) => (b._id || '').localeCompare(a._id || ''))[0] || null;
     }
-
     return data.hero;
   } catch {
     return null;
@@ -48,7 +34,6 @@ export async function generateMetadata({
   const { lang: rawLang } = await params;
   const lang = rawLang === 'de' || rawLang === 'ge' ? 'ge' : 'en';
   const hero = await getHeroMeta(lang);
-  console.log("[generateMetadata] hero data:", JSON.stringify({ metaTitle: hero?.metaTitle, metaDescription: hero?.metaDescription, metaKeywords: hero?.metaKeywords, title: hero?.title, _id: hero?._id }));
 
   const title =
     hero?.metaTitle ||

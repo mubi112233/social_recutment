@@ -65,14 +65,7 @@ export async function fetchHomePageData(lang: string): Promise<HomePageData> {
   
   try {
     // Fetch all data in parallel for better performance
-    const [
-      servicesResponse,
-      testimonialsResponse,
-      pricingResponse,
-      faqResponse,
-      caseStudiesResponse,
-      blogResponse
-    ] = await Promise.all([
+    const results = await Promise.allSettled([
       fetchAPI(`${API_ENDPOINTS.SERVICES}?lang=${normalizedLang}`),
       fetchAPI(`${API_ENDPOINTS.TESTIMONIALS}?lang=${normalizedLang}`),
       fetchAPI(`${API_ENDPOINTS.PRICING}?lang=${normalizedLang}`),
@@ -81,7 +74,12 @@ export async function fetchHomePageData(lang: string): Promise<HomePageData> {
       fetchAPI(`${API_ENDPOINTS.BLOGS}?lang=${normalizedLang}`)
     ]);
 
-    // Parse responses in parallel
+    const safeJson = async (result: PromiseSettledResult<Response>) => {
+      if (result.status === 'rejected') return null;
+      if (!result.value.ok) return null;
+      try { return await result.value.json(); } catch { return null; }
+    };
+
     const [
       servicesData,
       testimonialsData,
@@ -89,14 +87,7 @@ export async function fetchHomePageData(lang: string): Promise<HomePageData> {
       faqData,
       caseStudiesData,
       blogData
-    ] = await Promise.all([
-      servicesResponse.json(),
-      testimonialsResponse.json(),
-      pricingResponse.json(),
-      faqResponse.json(),
-      caseStudiesResponse.json(),
-      blogResponse.json()
-    ]);
+    ] = await Promise.all(results.map(safeJson));
 
     return {
       services: servicesData?.services || [],
@@ -195,31 +186,29 @@ const fallbackCaseStudies: CaseStudyCard[] = [
 export async function fetchCaseStudiesCardsData(lang: string): Promise<CaseStudyCard[]> {
   try {
     const normalizedLang = normalizeLanguage(lang);
-    console.log('[fetchCaseStudiesCardsData] Fetching for lang:', normalizedLang);
-    const response = await fetchAPI(`${API_ENDPOINTS.CASE_STUDIES}?lang=${normalizedLang}`);
+    let response: Response;
+    try {
+      response = await fetchAPI(`${API_ENDPOINTS.CASE_STUDIES}?lang=${normalizedLang}`);
+    } catch {
+      return fallbackCaseStudies;
+    }
+    if (!response.ok) return fallbackCaseStudies;
     const data = await response.json();
-    console.log('[fetchCaseStudiesCardsData] Full API response:', JSON.stringify(data, null, 2).substring(0, 2000));
     
     // Handle different API response structures
     const caseStudiesArray = data?.caseStudies || data?.data || data?.items || data;
     
     if (!caseStudiesArray) {
-      console.log('[fetchCaseStudiesCardsData] No caseStudies array, returning fallback');
       return fallbackCaseStudies;
     }
     
     if (!Array.isArray(caseStudiesArray)) {
-      console.log('[fetchCaseStudiesCardsData] caseStudies is not array:', typeof caseStudiesArray);
       return fallbackCaseStudies;
     }
     
     if (caseStudiesArray.length === 0) {
-      console.log('[fetchCaseStudiesCardsData] Empty caseStudies array');
       return fallbackCaseStudies;
     }
-    
-    console.log('[fetchCaseStudiesCardsData] Found', caseStudiesArray.length, 'case studies');
-    console.log('[fetchCaseStudiesCardsData] First item:', JSON.stringify(caseStudiesArray[0], null, 2));
     
     return caseStudiesArray
       .map((cs: Record<string, unknown>) => {
@@ -276,7 +265,12 @@ export async function fetchFinalCtaSectionData(
 ): Promise<FinalCtaSectionPayload | null> {
   try {
     const normalizedLang = normalizeLanguage(lang);
-    const response = await fetchAPI(`${API_ENDPOINTS.FINAL_CTA}?lang=${normalizedLang}`);
+    let response: Response;
+    try {
+      response = await fetchAPI(`${API_ENDPOINTS.FINAL_CTA}?lang=${normalizedLang}`);
+    } catch {
+      return null;
+    }
     if (!response.ok) return null;
     const data = await response.json();
     const section = data?.finalCta;
