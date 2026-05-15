@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   verification: {
-    google: "zgcogxyprhBhJw6ZwAznROIfIfKA4zi8jaNyibuqxPI",
+    google: "5fFyGMS1mEaPePVNR1a8gVbMpeqBr9r-S6cR9x0bNEw",
   },
   robots: {
     index: true,
@@ -270,14 +270,14 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
         
         {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-GFH2V4P0BX" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=14887789500" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-GFH2V4P0BX');
+              gtag('config', '14887789500');
             `,
           }}
         />
