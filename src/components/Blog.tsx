@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { Calendar, Clock, ArrowRight, Loader2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -21,7 +20,8 @@ const decodeHtml = (value: string) => {
     .replace(/&amp;/g, "&");
 };
 
-const slugify = (title: string) => {
+const slugify = (title: string | undefined | null) => {
+  if (!title) return "untitled";
   return title
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
@@ -47,7 +47,7 @@ interface BlogPost {
 }
 
 export const Blog = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const currentLang = pathname.startsWith("/ge") || pathname.startsWith("/de") ? "ge" : "en";
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +64,27 @@ export const Blog = () => {
 
         if (!data) throw new Error("Failed to fetch blogs");
 
-        const fetchedBlogs = Array.isArray((data as any).blogs)
-          ? (data as any).blogs.sort(
-              (a: BlogPost, b: BlogPost) =>
-                (a.order || 0) - (b.order || 0) || a.blogId - b.blogId
-            )
-          : [];
+        const raw = (data as any).blogs;
+        let fetchedBlogs: BlogPost[] = [];
+
+        if (Array.isArray(raw)) {
+          // Check if it's flat array of posts or array containing one object with blog_1, blog_2 keys
+          if (raw.length > 0 && raw[0]?.blogId !== undefined) {
+            // Flat array of posts
+            fetchedBlogs = raw;
+          } else if (raw.length > 0) {
+            // Object with blog_1, blog_2... keys — extract all nested blog objects
+            const container = raw[0];
+            fetchedBlogs = Object.keys(container)
+              .filter((k) => k.startsWith("blog_"))
+              .map((k) => container[k])
+              .filter(Boolean);
+          }
+        }
+
+        fetchedBlogs = fetchedBlogs
+          .filter((b) => b?.title)
+          .sort((a, b) => (a.order || 0) - (b.order || 0) || a.blogId - b.blogId);
 
         setPosts(fetchedBlogs);
       } catch (err) {
@@ -157,14 +172,21 @@ export const Blog = () => {
                 className="group bg-card border border-border rounded-xl sm:rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 w-full block h-full"
               >
                 {/* Image */}
-                <div className="relative h-44 sm:h-52 md:h-48 lg:h-56 overflow-hidden">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                <div className="relative h-44 sm:h-52 md:h-48 lg:h-56 overflow-hidden bg-muted">
+                  {post.image ? (
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                      <span className="text-muted-foreground text-sm font-medium">{post.category}</span>
+                    </div>
+                  )}
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
                       {post.category}

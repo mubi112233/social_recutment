@@ -1,14 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
-import Image from "next/image";
+import { Calendar, Clock, ArrowLeft, Share2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { getCopy } from "@/lib/copy";
 import { SPACING } from "@/lib/constants";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { localizedPath, siteConfig, type SiteLocale } from "@/lib/site-config";
+import { fetchBlog } from "@/lib/api";
 
 interface BlogPost {
   blogId: number;
@@ -22,40 +23,78 @@ interface BlogPost {
   image: string;
 }
 
-export default function BlogPostClient({
-  post,
-  lang,
-}: {
-  post: BlogPost;
-  lang: string;
-}) {
+const slugify = (title: string) =>
+  title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
+
+function extractPosts(data: any): BlogPost[] {
+  const raw = data?.blogs;
+  if (!Array.isArray(raw)) return [];
+  if (raw[0]?.blogId !== undefined) return raw;
+  const container = raw[0];
+  return Object.keys(container || {})
+    .filter((k) => k.startsWith("blog_"))
+    .map((k) => container[k])
+    .filter(Boolean);
+}
+
+function findPost(posts: BlogPost[], slug: string): BlogPost | null {
+  const id = Number(slug.split("-").pop());
+  if (!isNaN(id)) {
+    const byId = posts.find((p) => p.blogId === id);
+    if (byId) return byId;
+  }
+  return posts.find((p) => p.title && slug.startsWith(slugify(p.title))) ?? null;
+}
+
+export default function BlogPostClient({ lang }: { lang: string }) {
+  const params = useParams();
+  const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
   const router = useRouter();
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const copy = getCopy(lang, "blog");
   const isGe = lang === "ge";
 
+  useEffect(() => {
+    fetchBlog(lang).then((data) => {
+      const posts = extractPosts(data);
+      setPost(findPost(posts, slug));
+      setLoading(false);
+    });
+  }, [lang, slug]);
+
   const handleShare = async () => {
-    const shareData = {
-      title: post.title,
-      text: post.excerpt,
-      url: typeof window !== "undefined" ? window.location.href : "",
-    };
-    if (navigator.share && navigator.canShare?.(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") copyToClipboard();
-      }
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (navigator.share) {
+      try { await navigator.share({ title: post?.title, text: post?.excerpt, url }); } catch {}
     } else {
-      copyToClipboard();
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${SPACING.sideMargin} bg-background flex items-center justify-center`}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className={`min-h-screen ${SPACING.sideMargin} bg-background flex items-center justify-center`}>
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">{isGe ? "Artikel nicht gefunden." : "Post not found."}</p>
+          <button onClick={() => router.push(`/${lang}/blog`)} className="text-primary underline">
+            {isGe ? "Zurück zum Blog" : "Back to Blog"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${SPACING.sideMargin} bg-background`}>
@@ -65,16 +104,12 @@ export default function BlogPostClient({
         transition={{ duration: 0.6 }}
         className="max-w-4xl mx-auto py-6 sm:py-8 md:py-12 px-4 sm:px-6 lg:px-8"
       >
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: isGe ? "Startseite" : "Home", href: `/${lang}` },
-            { label: "Blog", href: `/${lang}/blog` },
-            { label: post.title, href: `/${lang}/blog/${post.title}` },
-          ]}
-        />
+        <Breadcrumb items={[
+          { label: isGe ? "Startseite" : "Home", href: `/${lang}` },
+          { label: "Blog", href: `/${lang}/blog` },
+          { label: post.title, href: `/${lang}/blog/${slug}` },
+        ]} />
 
-        {/* Back button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -87,7 +122,6 @@ export default function BlogPostClient({
           <span className="sm:hidden">{isGe ? "Zurück" : "Back"}</span>
         </motion.button>
 
-        {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -126,7 +160,7 @@ export default function BlogPostClient({
             </div>
             <button
               onClick={handleShare}
-              className="relative p-2.5 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors self-start sm:self-auto group"
+              className="relative p-2.5 sm:p-3 rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors self-start sm:self-auto"
               aria-label="Share"
             >
               <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -139,7 +173,6 @@ export default function BlogPostClient({
           </div>
         </motion.header>
 
-        {/* Featured image */}
         {post.image && (
           <motion.figure
             initial={{ opacity: 0, scale: 0.95 }}
@@ -148,68 +181,30 @@ export default function BlogPostClient({
             className="mb-8 sm:mb-12"
           >
             <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
-              <Image src={post.image} alt={post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1024px" className="object-cover" priority />
+              <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
             </div>
           </motion.figure>
         )}
 
-        {/* Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
           className="prose prose-base sm:prose-lg max-w-none mb-10 sm:mb-14
-              prose-headings:font-bold
-              prose-h2:text-blue-500 prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl prose-h2:mb-6 prose-h2:mt-14 prose-h2:pb-3 prose-h2:border-b-2 prose-h2:border-gradient-to-r prose-h2:from-blue-500 prose-h2:to-blue-600
-              prose-h3:text-blue-500 prose-h3:text-xl sm:prose-h3:text-2xl lg:prose-h3:text-3xl prose-h3:mb-4 prose-h3:mt-10
-              prose-h4:text-blue-400 prose-h4:text-lg sm:prose-h4:text-xl prose-h4:mb-3 prose-h4:mt-8
-              prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-5 prose-p:text-base sm:prose-p:text-lg lg:prose-p:text-[1.05rem]
-              prose-strong:text-blue-500 prose-strong:font-semibold prose-strong:text-base sm:prose-strong:text-lg
-              prose-ul:my-6 prose-ul:space-y-3
-              prose-ol:my-6 prose-ol:space-y-3
-              prose-li:text-foreground/85 prose-li:text-base sm:prose-li:text-lg lg:prose-li:text-[1.05rem] prose-li:leading-relaxed prose-li:pl-2
-              [&_ul]:list-none [&_ul]:pl-0
-              [&_ul>li]:relative [&_ul>li]:pl-8 [&_ul>li]:before:content_['▸'] [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:text-blue-500 [&_ul>li]:before:font-bold [&_ul>li]:before:text-xl
-              [&_ol]:list-none [&_ol]:pl-0 [&_ol]:counter-reset-[item]
-              [&_ol>li]:relative [&_ol>li]:pl-8 [&_ol>li]:counter-increment-[item] [&_ol>li]:before:content-[counter(item)] [&_ol>li]:before:absolute [&_ol>li]:before:left-0 [&_ol>li]:before:text-blue-500 [&_ol>li]:before:font-bold [&_ol>li]:before:text-lg [&_ol>li]:before:bg-blue-500/10 [&_ol>li]:before:w-6 [&_ol>li]:before:h-6 [&_ol>li]:before:rounded-full [&_ol>li]:before:flex [&_ol>li]:before:items-center [&_ol>li]:before:justify-center
-              [&_li>strong]:text-blue-500
-              [&_br]:my-2"
+            prose-headings:font-bold prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-5
+            prose-strong:text-blue-500 prose-h2:text-blue-500 prose-h3:text-blue-500"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
-        {/* Category */}
         {post.category && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-8 sm:mt-10 pb-6 sm:pb-8 border-b border-border/50">
+          <div className="mt-8 sm:mt-10 pb-6 sm:pb-8 border-b border-border/50">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               {isGe ? "Kategorie" : "Category"}
             </h3>
             <span className="px-4 py-2 bg-blue-500/10 text-blue-400 text-sm font-medium rounded-lg">{post.category}</span>
-          </motion.div>
+          </div>
         )}
 
-        {/* Author bio */}
-        <motion.aside
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mt-8 sm:mt-10 p-5 sm:p-6 lg:p-8 bg-gradient-to-br from-blue-500/5 via-blue-500/10 to-transparent border border-blue-500/20 rounded-xl sm:rounded-2xl shadow-sm"
-        >
-          <div className="flex items-start gap-3 sm:gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-xl sm:text-2xl flex-shrink-0">
-              {post.author.charAt(0)}
-            </div>
-            <div>
-              <div className="font-bold text-foreground text-base sm:text-lg mb-1">{post.author}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                {isGe
-                  ? "Experte für Suchmaschinenoptimierung und digitales Marketing."
-                  : "Expert in SEO and digital marketing. Sharing insights and best practices for search optimization."}
-              </div>
-            </div>
-          </div>
-        </motion.aside>
-
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -217,39 +212,28 @@ export default function BlogPostClient({
           className="mt-8 sm:mt-10 p-6 sm:p-8 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border-2 border-blue-500/30 rounded-2xl text-center"
         >
           <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-3">
-            {isGe ? "Bereit, Ihre Rankings zu verbessern?" : "Ready to Improve Your Rankings?"}
+            {isGe ? "Bereit, Ihre Ergebnisse zu verbessern?" : "Ready to Improve Your Results?"}
           </h3>
           <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-2xl mx-auto">
-            {isGe ? "Entdecken Sie, wie SEO Ihre organische Sichtbarkeit verbessern kann." : "Discover how SEO can transform your organic visibility."}
+            {isGe ? "Entdecken Sie, wie Social-Media-Recruiting Ihre Einstellung beschleunigen kann." : "Discover how social media recruiting can transform your hiring."}
           </p>
           <button
-            onClick={() =>
-              router.push(
-                localizedPath((lang === "ge" ? "ge" : "en") as SiteLocale, siteConfig.routes.bookMeeting)
-              )
-            }
+            onClick={() => router.push(localizedPath((lang === "ge" ? "ge" : "en") as SiteLocale, siteConfig.routes.bookMeeting))}
             className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-blue-500 text-white text-sm sm:text-base font-bold rounded-xl hover:bg-blue-500/90 transition-all hover:shadow-xl hover:scale-105"
           >
             {isGe ? "Jetzt starten" : "Get Started"}
           </button>
         </motion.div>
 
-        {/* Back to blog */}
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-border/50 text-center"
-        >
+        <footer className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-border/50 text-center">
           <button
             onClick={() => router.push(`/${lang}/blog`)}
-            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-card border border-border/50 text-foreground text-sm sm:text-base font-semibold rounded-xl hover:border-blue-400/50 hover:bg-card/80 transition-all hover:shadow-lg group"
+            className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-card border border-border/50 text-foreground text-sm sm:text-base font-semibold rounded-xl hover:border-blue-400/50 transition-all group"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline">{isGe ? "Alle Blog-Artikel ansehen" : "View All Blog Posts"}</span>
-            <span className="sm:hidden">{isGe ? "Alle Artikel" : "All Posts"}</span>
+            <span>{isGe ? "Alle Blog-Artikel ansehen" : "View All Blog Posts"}</span>
           </button>
-        </motion.footer>
+        </footer>
       </motion.article>
     </div>
   );

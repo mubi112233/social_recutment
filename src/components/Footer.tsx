@@ -6,7 +6,7 @@ import { SPACING } from "@/lib/constants";
 import { siteConfig, normalizeLocale, localizedPath } from "@/lib/site-config";
 
 export const Footer: React.FC = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const lang = normalizeLocale(pathname);
   const isGe = lang === "ge";
 

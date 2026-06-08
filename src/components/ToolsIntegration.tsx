@@ -29,7 +29,7 @@ const categoryLabels: Record<string, { en: string; ge: string }> = {
 };
 
 export const ToolsIntegration = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const isGe = pathname.startsWith("/ge") || pathname.startsWith("/de");
 
   const getCategory = (category: string) =>

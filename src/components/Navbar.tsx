@@ -16,7 +16,7 @@ export const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const siteLocale = normalizeLocale(pathname);
 
   useEffect(() => {
@@ -83,9 +83,14 @@ export const Navbar = () => {
     const id = hash.replace("#", "");
     if (isHomePage) {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.location.hash = hash;
+      }
     } else {
-      router.push(`${currentLang === "de" ? "/de" : "/en"}${hash}`);
+      const homeUrl = `/${currentLang === "de" ? "de" : "en"}${hash}`;
+      window.location.href = homeUrl;
     }
     setIsOpen(false);
   };

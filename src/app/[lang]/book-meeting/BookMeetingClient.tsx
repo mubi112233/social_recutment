@@ -18,7 +18,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function BookMeetingClient() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -1,9 +1,10 @@
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
 import { HomeBelowFold } from "@/components/HomeBelowFold.hybrid";
+import { FinalCTA } from "@/components/FinalCTA.server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { fetchApiData, API_ENDPOINTS, normalizeLanguage, fetchFAQ } from "@/lib/api";
+import { fetchApiData, API_ENDPOINTS, normalizeLanguage } from "@/lib/api";
 import { generateFAQSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 import { SITE_URL, absoluteUrl, hreflangAlternates, publicLocalePathSegment } from "@/lib/site-url";
 
@@ -179,9 +180,9 @@ export default async function HomeLangPage({
   const lang = rawLang === 'de' || rawLang === 'ge' ? 'ge' : 'en';
   const jsonLd = pageJsonLd(SITE_URL)[lang];
 
-  // Fetch FAQ data for structured data
-  const faqData = await fetchFAQ(lang);
-  const faqs = faqData?.faqs?.slice(0, 10) || []; // Limit to 10 FAQs for schema
+  // Fetch FAQ data for structured data only
+  const faqData = await fetchApiData<{ faqs: { question: string; answer: string }[] }>(API_ENDPOINTS.FAQ, normalizeLanguage(lang));
+  const faqs = faqData?.faqs?.slice(0, 10) || [];
 
   // Generate FAQ schema
   const faqSchema = faqs.length > 0
@@ -213,6 +214,7 @@ export default async function HomeLangPage({
       <main id="main-content" className="overflow-x-hidden">
         <Hero />
         <HomeBelowFold lang={lang} />
+        <FinalCTA lang={lang} />
       </main>
     </div>
   );

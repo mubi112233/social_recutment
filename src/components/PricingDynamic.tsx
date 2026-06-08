@@ -94,7 +94,7 @@ export const PricingDynamic = ({ lang }: { lang: string }) => {
     return 'en';
   };
 
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const pathLang = pathname.startsWith('/ge') || pathname.startsWith('/de') ? 'ge' : 'en';
   const [currentLang] = useState(normalizeApiLang(lang || pathLang));
 

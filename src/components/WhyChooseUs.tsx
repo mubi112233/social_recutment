@@ -43,7 +43,7 @@ export const WhyChooseUs = () => {
   const [whyChooseUsData, setWhyChooseUsData] = useState<WhyChooseUsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const currentLang = pathname.startsWith('/ge') || pathname.startsWith('/de') ? 'ge' : 'en';
 
   const isGe = currentLang === 'ge';

@@ -31,7 +31,7 @@ export const Services = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const currentLang = pathname.startsWith('/ge') || pathname.startsWith('/de') ? 'ge' : 'en';
 
   const copy = sectionCopy[currentLang as keyof typeof sectionCopy] || sectionCopy.en;

@@ -6,15 +6,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Zap } from "lucide-react";
 import { getCopy } from "@/lib/copy";
-import type { FAQItem } from "@/lib/api";
+import { fetchFAQ, type FAQItem } from "@/lib/api";
 
-export function FAQInteractive({ faqs, lang }: { faqs: FAQItem[]; lang: string }) {
+export function FAQInteractive({ lang }: { lang: string }) {
   const copy = getCopy(lang, "faq");
   const [openItem, setOpenItem] = useState<string>("");
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+
+  useEffect(() => {
+    fetchFAQ(lang).then((data) => {
+      const list = data?.faqs || [];
+      setFaqs([...list].sort((a, b) => a.order - b.order));
+    });
+  }, [lang]);
 
   return (
     <section

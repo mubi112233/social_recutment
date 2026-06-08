@@ -29,7 +29,7 @@ const sectionCopy = {
 export const HowItWorks = () => {
   const [steps, setSteps] = useState<Step[]>([]);
   const [loading, setLoading] = useState(true);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const currentLang = pathname.startsWith('/ge') || pathname.startsWith('/de') ? 'ge' : 'en';
   const copy = sectionCopy[currentLang as keyof typeof sectionCopy] || sectionCopy.en;
 

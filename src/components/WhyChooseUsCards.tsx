@@ -53,7 +53,7 @@ const cards = {
 };
 
 export const WhyChooseUsCards = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const isGe = pathname.startsWith("/ge") || pathname.startsWith("/de");
   const lang = isGe ? "ge" : "en";
   const items = cards[lang];
