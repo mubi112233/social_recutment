@@ -119,8 +119,13 @@ export async function fetchServicesData(lang: string): Promise<Service[]> {
   try {
     const normalizedLang = normalizeLanguage(lang);
     const response = await fetchAPI(`${API_ENDPOINTS.SERVICES}?lang=${normalizedLang}`);
-    const data = await response.json();
-    return data?.services || [];
+    if (!response.ok) return [];
+    try {
+      const data = await response.json();
+      return data?.services || [];
+    } catch {
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching services:', error);
     return [];
@@ -131,8 +136,13 @@ export async function fetchTestimonialsData(lang: string): Promise<Testimonial[]
   try {
     const normalizedLang = normalizeLanguage(lang);
     const response = await fetchAPI(`${API_ENDPOINTS.TESTIMONIALS}?lang=${normalizedLang}`);
-    const data = await response.json();
-    return data?.testimonials || [];
+    if (!response.ok) return [];
+    try {
+      const data = await response.json();
+      return data?.testimonials || [];
+    } catch {
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching testimonials:', error);
     return [];
@@ -143,9 +153,14 @@ export async function fetchFAQData(lang: string): Promise<FAQItem[]> {
   try {
     const normalizedLang = normalizeLanguage(lang);
     const response = await fetchAPI(`${API_ENDPOINTS.FAQ}?lang=${normalizedLang}`);
-    const data = await response.json();
-    const list = Array.isArray(data?.faqs) ? (data.faqs as FAQItem[]) : [];
-    return [...list].sort((a, b) => a.order - b.order);
+    if (!response.ok) return [];
+    try {
+      const data = await response.json();
+      const list = Array.isArray(data?.faqs) ? (data.faqs as FAQItem[]) : [];
+      return [...list].sort((a, b) => a.order - b.order);
+    } catch {
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     return [];
