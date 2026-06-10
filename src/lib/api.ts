@@ -9,7 +9,7 @@
 const getApiBase = () =>
   process.env.NEXT_PUBLIC_API_BASE || "https://api.don-va.com";
 
-const getTenantId = () => process.env.NEXT_PUBLIC_TENANT_ID || 'recruitment';
+const getTenantId = () => process.env.NEXT_PUBLIC_TENANT_ID || 'social_media_agency';
 
 /**
  * Creates fetch options with proper headers including X-Tenant-ID
