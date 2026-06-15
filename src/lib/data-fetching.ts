@@ -233,7 +233,6 @@ export async function fetchCaseStudiesCardsData(lang: string): Promise<CaseStudy
         // API returns: _id, lang, caseStudyId, content, name, role, company, rating, order
         const content = (cs.content as string) || "";
         const company = (cs.company as string) || "Client";
-        const name = (cs.name as string) || "";
         const role = (cs.role as string) || "";
         
         // Extract metric from content (e.g., "17%", "99%", "41%", "12 points")
