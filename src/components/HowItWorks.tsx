@@ -26,6 +26,8 @@ const fallbackStepsDe: Step[] = [
   { _id: "3", lang: "de", stepNumber: 3, icon: "Rocket", stepLabel: "Schritt 3", title: "Aktives Sourcing", description: "Unser Team führt gezielte Kampagnen über LinkedIn, Meta, TikTok und professionelle Netzwerke durch." },
   { _id: "4", lang: "de", stepNumber: 4, icon: "LineChart", stepLabel: "Schritt 4", title: "Screening & Lieferung", description: "Wir screenen Bewerber vor und liefern eine Shortlist qualifizierter Kandidaten." },
 ];
+
+const sectionCopy = {
   en: {
     badge: "Social Recruitment in 4 Steps",
     heading: "How It Works",
