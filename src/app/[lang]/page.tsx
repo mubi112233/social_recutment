@@ -181,7 +181,12 @@ export default async function HomeLangPage({
   const jsonLd = pageJsonLd(SITE_URL)[lang];
 
   // Fetch FAQ data for structured data only
-  const faqData = await fetchApiData<{ faqs: { question: string; answer: string }[] }>(API_ENDPOINTS.FAQ, normalizeLanguage(lang));
+  let faqData = null;
+  try {
+    faqData = await fetchApiData<{ faqs: { question: string; answer: string }[] }>(API_ENDPOINTS.FAQ, normalizeLanguage(lang));
+  } catch {
+    // API unavailable — structured data will be omitted
+  }
   const faqs = faqData?.faqs?.slice(0, 10) || [];
 
   // Generate FAQ schema

@@ -112,7 +112,12 @@ function mergeFinalCta(
 
 export async function FinalCTA({ lang }: { lang: string }) {
   const locale: SiteLocale = lang === "ge" ? "ge" : "en";
-  const apiData = await fetchFinalCtaSectionData(lang);
+  let apiData: FinalCtaSectionPayload | null = null;
+  try {
+    apiData = await fetchFinalCtaSectionData(lang);
+  } catch {
+    // API unavailable — fall through to render with fallback copy
+  }
   const c = mergeFinalCta(locale, apiData);
 
   const statsItems = [

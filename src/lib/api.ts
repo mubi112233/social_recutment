@@ -42,7 +42,20 @@ export async function fetchAPI(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${getApiBase()}${endpoint}`;
-  return fetch(url, createFetchOptions(options));
+  // Use a 10-second timeout so a down API never hangs server rendering indefinitely.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(url, {
+      ...createFetchOptions(options),
+      signal: controller.signal,
+      // Don't use force-cache for API data — stale/corrupt cache can crash rendering.
+      cache: 'no-store',
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**

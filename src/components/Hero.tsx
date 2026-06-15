@@ -152,10 +152,11 @@ export const Hero = () => {
               </span>
             </motion.div>
 
-            {/* Title - White text, multi-line */}
+            {/* Title - driven by API/fallback, locale-aware */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-5 md:mb-6 leading-[1.1] sm:leading-[1.08] md:leading-[1.05]">
-              <span className="text-white">Expert </span>
-              <span className="bg-gradient-to-r from-[hsl(330,81%,60%)] via-[hsl(270,60%,60%)] to-[hsl(217,91%,60%)] bg-clip-text text-transparent">Social Media Recruitment</span>
+              <span className="bg-gradient-to-r from-[hsl(330,81%,60%)] via-[hsl(270,60%,60%)] to-[hsl(217,91%,60%)] bg-clip-text text-transparent">
+                {title}
+              </span>
             </h1>
 
             {/* Subtitle */}

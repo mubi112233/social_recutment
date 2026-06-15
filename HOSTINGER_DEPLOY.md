@@ -31,13 +31,26 @@ Do **not** upload:
 
 Set these values in Hostinger environment variables:
 
-- `NEXT_PUBLIC_API_BASE=http://your-backend-server:5001`  # Replace with actual backend URL/IP
-- `NEXT_PUBLIC_TENANT_ID=donva`
+- `NEXT_PUBLIC_API_BASE=https://api.don-va.com`
+- `NEXT_PUBLIC_TENANT_ID=socal_media_agency`
 - `NODE_ENV=production`
+- `NEXT_PUBLIC_SITE_URL=https://don-sr.com`  ← **critical for SEO**
+
+> **Canonical URL & www redirect — important:**
+> The value of `NEXT_PUBLIC_SITE_URL` must exactly match the URL that Hostinger actually serves the site on.
+> - If Hostinger redirects `don-sr.com` → `www.don-sr.com`, set this to `https://www.don-sr.com`
+> - If Hostinger serves on `don-sr.com` (no www), set this to `https://don-sr.com`
+>
+> A mismatch causes Google to see canonical tags pointing to a URL that immediately redirects,
+> which splits page authority and prevents proper indexing. Check which URL your browser lands on
+> after visiting the site and set `NEXT_PUBLIC_SITE_URL` to match that exactly.
+>
+> **Recommended:** configure Hostinger to redirect `www.don-sr.com` → `don-sr.com` (non-www is canonical).
+> This avoids needing to change any code.
 
 **Important:** Do NOT use `http://localhost:5001` as the API_BASE. The backend server must be accessible from the internet. Use the server's public IP or domain (e.g., `http://srv1201161:5001` or `https://api.yourdomain.com`).
 
-**Backend CORS Configuration:** Ensure your backend server allows CORS requests from your Hostinger domain. Update the backend CORS origins to include `https://yourhostingerdomain.com` instead of just `http://localhost:5173`.
+**Backend CORS Configuration:** Ensure your backend server allows CORS requests from your Hostinger domain. Update the backend CORS origins to include `https://don-sr.com` (and `https://www.don-sr.com` if applicable).
 
 ## 4) Install + Build + Start
 
