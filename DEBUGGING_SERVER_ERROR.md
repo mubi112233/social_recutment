@@ -6,9 +6,9 @@ This error typically occurs when a Server Component fails during rendering. The 
 
 ## What I've Fixed
 
-1. **Fixed environment variable typo**
-   - Changed `NEXT_PUBLIC_TENANT_ID=socal_media_agency` to `NEXT_PUBLIC_TENANT_ID=social_media_agency`
-   - This was likely causing API requests to fail with the wrong tenant ID
+1. **Confirmed correct tenant ID**
+   - `NEXT_PUBLIC_TENANT_ID=socal_media_agency` — this is correct, do NOT change it
+   - The API is configured with this exact value
 
 2. **Added Error Boundaries**
    - Created `src/app/error.tsx` for global error handling
@@ -32,7 +32,7 @@ This error typically occurs when a Server Component fails during rendering. The 
 Run this in your terminal to test the API:
 
 ```bash
-curl -H "X-Tenant-ID: social_media_agency" https://api.don-va.com/api/hero?lang=en
+curl -H "X-Tenant-ID: socal_media_agency" https://api.don-va.com/api/hero?lang=en
 ```
 
 Expected: Should return JSON data with hero content, not an error
@@ -58,10 +58,10 @@ Verify your `.env` file contains:
 ```env
 NEXT_PUBLIC_API_BASE=https://api.don-va.com
 NEXT_PUBLIC_API_BASE_URL=https://api.don-va.com
-NEXT_PUBLIC_TENANT_ID=social_media_agency
+NEXT_PUBLIC_TENANT_ID=socal_media_agency
 
 VITE_API_BASE=https://api.don-va.com
-VITE_DATABASE=social_media_agency
+VITE_DATABASE=socal_media_agency
 ```
 
 ## Next Steps

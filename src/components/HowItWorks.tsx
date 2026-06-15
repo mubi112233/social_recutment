@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, UserCheck, Rocket, LineChart, Loader2 } from "lucide-react";
+import { Calendar, UserCheck, Rocket, LineChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { fetchHowItWorks, type Step } from "@/lib/api";
@@ -13,7 +13,19 @@ const iconMap = {
   LineChart
 };
 
-const sectionCopy = {
+const fallbackSteps: Step[] = [
+  { _id: "1", lang: "en", stepNumber: 1, icon: "Calendar", stepLabel: "Step 1", title: "Strategy & Targeting", description: "We analyze your hiring needs and build ideal candidate personas for precise social media targeting." },
+  { _id: "2", lang: "en", stepNumber: 2, icon: "UserCheck", stepLabel: "Step 2", title: "Campaign Creation", description: "We craft compelling job ads and employer branding content optimized for each platform." },
+  { _id: "3", lang: "en", stepNumber: 3, icon: "Rocket", stepLabel: "Step 3", title: "Active Sourcing", description: "Our team runs targeted campaigns across LinkedIn, Meta, TikTok, and professional networks." },
+  { _id: "4", lang: "en", stepNumber: 4, icon: "LineChart", stepLabel: "Step 4", title: "Screening & Delivery", description: "We pre-screen applicants and deliver a shortlist of qualified, interested candidates." },
+];
+
+const fallbackStepsDe: Step[] = [
+  { _id: "1", lang: "de", stepNumber: 1, icon: "Calendar", stepLabel: "Schritt 1", title: "Strategie & Targeting", description: "Wir analysieren Ihre Hiring-Bedürfnisse und erstellen ideale Kandidaten-Personas für präzises Targeting." },
+  { _id: "2", lang: "de", stepNumber: 2, icon: "UserCheck", stepLabel: "Schritt 2", title: "Kampagnen-Erstellung", description: "Wir erstellen überzeugende Stellenanzeigen und Employer-Branding-Inhalte für jede Plattform." },
+  { _id: "3", lang: "de", stepNumber: 3, icon: "Rocket", stepLabel: "Schritt 3", title: "Aktives Sourcing", description: "Unser Team führt gezielte Kampagnen über LinkedIn, Meta, TikTok und professionelle Netzwerke durch." },
+  { _id: "4", lang: "de", stepNumber: 4, icon: "LineChart", stepLabel: "Schritt 4", title: "Screening & Lieferung", description: "Wir screenen Bewerber vor und liefern eine Shortlist qualifizierter Kandidaten." },
+];
   en: {
     badge: "Social Recruitment in 4 Steps",
     heading: "How It Works",
@@ -27,37 +39,20 @@ const sectionCopy = {
 };
 
 export const HowItWorks = () => {
-  const [steps, setSteps] = useState<Step[]>([]);
-  const [loading, setLoading] = useState(true);
   const pathname = usePathname() ?? "/";
   const currentLang = pathname.startsWith('/ge') || pathname.startsWith('/de') ? 'ge' : 'en';
   const copy = sectionCopy[currentLang as keyof typeof sectionCopy] || sectionCopy.en;
+  const fallback = currentLang === 'ge' ? fallbackStepsDe : fallbackSteps;
+
+  const [steps, setSteps] = useState<Step[]>(fallback); // show fallback immediately
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSteps = async () => {
-      try {
-        const data = await fetchHowItWorks(currentLang);
-        setSteps(data?.steps || []);
-      } catch {
-        setSteps([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSteps();
-  }, [currentLang]);
-
-  if (loading) {
-    return (
-      <section id="how-it-works" className="relative py-4 sm:py-6 md:py-8 lg:py-10 z-20 bg-background">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        </div>
-      </section>
-    );
-  }
+    fetchHowItWorks(currentLang)
+      .then((data) => setSteps(data?.steps?.length ? data.steps : fallback))
+      .catch(() => setSteps(fallback))
+      .finally(() => setLoading(false));
+  }, [currentLang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <motion.section

@@ -3,6 +3,8 @@ import CaseStudyClient from "./CaseStudyClient";
 import { Navbar } from "@/components/Navbar";
 import { absoluteUrl, hreflangAlternates, publicLocalePathSegment } from "@/lib/site-url";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

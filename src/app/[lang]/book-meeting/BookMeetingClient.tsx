@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 
 export default function BookMeetingClient() {
   const pathname = usePathname() ?? "/";
@@ -274,10 +275,9 @@ export default function BookMeetingClient() {
                       data-url="https://calendly.com/d/cyhx-wdw-b57?embed_type=Inline&hide_gdpr_banner=1"
                       style={{ minWidth: "100%", height: "600px" }}
                     />
-                    <script
-                      type="text/javascript"
+                    <Script
                       src="https://assets.calendly.com/assets/external/widget.js"
-                      async
+                      strategy="lazyOnload"
                     />
                   </>
                 )}

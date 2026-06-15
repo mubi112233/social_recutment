@@ -3,12 +3,15 @@ import { Navbar } from "@/components/Navbar";
 import { HomeBelowFold } from "@/components/HomeBelowFold.hybrid";
 import { FinalCTA } from "@/components/FinalCTA.server";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { fetchApiData, API_ENDPOINTS, normalizeLanguage } from "@/lib/api";
 import { generateFAQSchema, generateBreadcrumbSchema } from "@/lib/structured-data";
 import { SITE_URL, absoluteUrl, hreflangAlternates, publicLocalePathSegment } from "@/lib/site-url";
 
-export const revalidate = 3600;
+// Never statically regenerate — always render on demand so a down API
+// never causes a build/ISR crash.
+export const dynamic = "force-dynamic";
 
 const SUPPORTED_LANGS = ['en', 'ge', 'de'];
 
@@ -219,7 +222,9 @@ export default async function HomeLangPage({
       <main id="main-content" className="overflow-x-hidden">
         <Hero />
         <HomeBelowFold lang={lang} />
-        <FinalCTA lang={lang} />
+        <Suspense fallback={null}>
+          <FinalCTA lang={lang} />
+        </Suspense>
       </main>
     </div>
   );

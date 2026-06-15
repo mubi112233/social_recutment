@@ -1,153 +1,135 @@
 /**
  * API Utility Functions for Next.js Application
- * 
- * This utility provides consistent API fetching with proper headers
- * including the X-Tenant-ID header for multi-tenancy support.
+ *
+ * Provides consistent API fetching with X-Tenant-ID header for multi-tenancy.
+ * - fetchAPI        → server components only (AbortController + no-store cache)
+ * - fetchAPIClient  → client components (AbortController so UI fails fast)
  */
 
-// API Configuration
 const getApiBase = () =>
   process.env.NEXT_PUBLIC_API_BASE || "https://api.don-va.com";
 
-const getTenantId = () => process.env.NEXT_PUBLIC_TENANT_ID || 'socal_media_agency';
+const getTenantId = () =>
+  process.env.NEXT_PUBLIC_TENANT_ID || "socal_media_agency";
 
-/**
- * Creates fetch options with proper headers including X-Tenant-ID
- */
+// ─── shared helpers ──────────────────────────────────────────────────────────
+
 export function createFetchOptions(options: RequestInit = {}): RequestInit {
   const headers = new Headers(options.headers || {});
-
-  // Inject X-Tenant-ID if it's not already there
-  if (!headers.has('X-Tenant-ID')) {
-    headers.set('X-Tenant-ID', getTenantId());
-  }
-
-  // Set default content-type if not present and body exists
-  if (options.body && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  return {
-    ...options,
-    headers,
-  };
+  if (!headers.has("X-Tenant-ID")) headers.set("X-Tenant-ID", getTenantId());
+  if (options.body && !headers.has("Content-Type"))
+    headers.set("Content-Type", "application/json");
+  return { ...options, headers };
 }
 
-/**
- * Server-side API fetch function with proper headers
- * Use this in server components and API routes
- */
+/** Wrap a fetch call with a timeout (ms). Rejects with AbortError on timeout. */
+function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(id) };
+}
+
+// ─── server-side fetch (server components / API routes) ──────────────────────
+
 export async function fetchAPI(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const url = endpoint.startsWith('http') ? endpoint : `${getApiBase()}${endpoint}`;
-  // Use a 10-second timeout so a down API never hangs server rendering indefinitely.
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  const url = endpoint.startsWith("http")
+    ? endpoint
+    : `${getApiBase()}${endpoint}`;
+  const { signal, clear } = withTimeout(30_000); // 30 s — generous for SSR
   try {
-    const response = await fetch(url, {
+    return await fetch(url, {
       ...createFetchOptions(options),
-      signal: controller.signal,
-      // Don't use force-cache for API data — stale/corrupt cache can crash rendering.
-      cache: 'no-store',
+      signal,
+      cache: "no-store", // never serve stale cached data to server renders
     });
-    return response;
   } finally {
-    clearTimeout(timeoutId);
+    clear();
   }
 }
 
-/**
- * Client-side API fetch function with proper headers
- * Use this in client components
- */
+// ─── client-side fetch (client components) ───────────────────────────────────
+
 export async function fetchAPIClient(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const url = endpoint.startsWith('http') ? endpoint : `${getApiBase()}${endpoint}`;
-  return fetch(url, createFetchOptions(options));
+  const url = endpoint.startsWith("http")
+    ? endpoint
+    : `${getApiBase()}${endpoint}`;
+  const { signal, clear } = withTimeout(8_000); // 8 s — fail fast so UI shows fallback quickly
+  try {
+    return await fetch(url, { ...createFetchOptions(options), signal });
+  } finally {
+    clear();
+  }
 }
 
-/**
- * Common API endpoints used across the application
- */
+// ─── generic data helpers ────────────────────────────────────────────────────
+
 export const API_ENDPOINTS = {
-  HERO: '/api/hero',
-  WHY_CHOOSE_US: '/api/why-choose-us',
-  SERVICES: '/api/services',
-  TESTIMONIALS: '/api/testimonials',
-  FAQ: '/api/faq',
-  CASE_STUDIES: '/api/case-studies',
-  BLOGS: '/api/blogs',
-  PRICING: '/api/pricing',
-  HOW_IT_WORKS: '/api/how-it-works',
-  FINAL_CTA: '/api/final-cta',
+  HERO: "/api/hero",
+  WHY_CHOOSE_US: "/api/why-choose-us",
+  SERVICES: "/api/services",
+  TESTIMONIALS: "/api/testimonials",
+  FAQ: "/api/faq",
+  CASE_STUDIES: "/api/case-studies",
+  BLOGS: "/api/blogs",
+  PRICING: "/api/pricing",
+  HOW_IT_WORKS: "/api/how-it-works",
+  FINAL_CTA: "/api/final-cta",
 } as const;
 
-/**
- * Helper function to build API URLs with language parameter
- */
 export function buildApiUrl(endpoint: string, lang: string): string {
-  const separator = endpoint.includes('?') ? '&' : '?';
-  return `${endpoint}${separator}lang=${lang}`;
+  const sep = endpoint.includes("?") ? "&" : "?";
+  return `${endpoint}${sep}lang=${lang}`;
 }
 
-/**
- * Generic API fetcher for data with language support
- */
+/** Server-side data fetch — returns null on any failure (never throws). */
 export async function fetchApiData<T>(
   endpoint: string,
   lang: string,
   options: RequestInit = {}
 ): Promise<T | null> {
   try {
-    const url = buildApiUrl(endpoint, lang);
-    let response: Response;
-    try {
-      response = await fetchAPI(url, options);
-    } catch {
-      return null;
-    }
+    const response = await fetchAPI(buildApiUrl(endpoint, lang), options);
     if (!response.ok) return null;
-    try { return await response.json(); } catch { return null; }
+    return await response.json();
   } catch {
     return null;
   }
 }
 
-/**
- * Generic API fetcher for client-side data with language support
- */
+/** Client-side data fetch — returns null on any failure (never throws). */
 export async function fetchApiDataClient<T>(
   endpoint: string,
   lang: string,
   options: RequestInit = {}
 ): Promise<T | null> {
   try {
-    const url = buildApiUrl(endpoint, lang);
-    let response: Response;
-    try {
-      response = await fetchAPIClient(url, options);
-    } catch {
-      return null;
-    }
+    const response = await fetchAPIClient(
+      buildApiUrl(endpoint, lang),
+      options
+    );
     if (!response.ok) return null;
-    try { return await response.json(); } catch { return null; }
+    return await response.json();
   } catch {
     return null;
   }
 }
 
-// Language normalization — API stores German data as 'de', not 'ge'
+// ─── language helper ─────────────────────────────────────────────────────────
+
+/** API stores German data as 'de', internal locale is 'ge'. */
 export const normalizeLanguage = (lang: string): string => {
-  const normalized = lang.toLowerCase();
-  if (normalized.startsWith('de') || normalized.startsWith('ge')) return 'de';
-  return 'en';
+  const l = lang.toLowerCase();
+  return l.startsWith("de") || l.startsWith("ge") ? "de" : "en";
 };
 
-// Hero API
+// ─── typed API callers ───────────────────────────────────────────────────────
+
 export interface HeroData {
   _id?: string;
   title: string;
@@ -156,35 +138,28 @@ export interface HeroData {
   image: string;
   ctaPrimary: string;
   urgency: string;
-  stats: {
-    clients: string;
-    costSaved: string;
-    rating: string;
-  };
+  stats: { clients: string; costSaved: string; rating: string };
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
 }
 
-export const fetchHero = (lang: string = 'en') =>
-  fetchApiDataClient<{ hero: HeroData | HeroData[] }>(API_ENDPOINTS.HERO, normalizeLanguage(lang))
-    .then(data => {
-      if (!data?.hero) return null;
+export const fetchHero = (lang = "en") =>
+  fetchApiDataClient<{ hero: HeroData | HeroData[] }>(
+    API_ENDPOINTS.HERO,
+    normalizeLanguage(lang)
+  ).then((data) => {
+    if (!data?.hero) return null;
+    if (Array.isArray(data.hero)) {
+      return (
+        [...data.hero].sort((a, b) =>
+          (b._id ?? "").localeCompare(a._id ?? "")
+        )[0] ?? null
+      );
+    }
+    return data.hero;
+  });
 
-      // Handle array response (multiple heroes)
-      if (Array.isArray(data.hero)) {
-        // Sort by _id (newest first - MongoDB ObjectId contains timestamp)
-        const sorted = data.hero.sort((a, b) => {
-          const idA = a._id || '';
-          const idB = b._id || '';
-          return idB.localeCompare(idA); // Descending order (newest first)
-        });
-        console.log(`[fetchHero] Found ${sorted.length} heroes, using newest:`, sorted[0]?._id);
-        return sorted[0] || null;
-      }
-
-      // Single hero object
-      return data.hero;
-    });
-
-// Services API
 export interface Service {
   _id?: string;
   order: number;
@@ -193,31 +168,27 @@ export interface Service {
   benefit: string;
   icon: string;
 }
-
 export interface ServicesResponse {
   services: Service[];
 }
+export const fetchServices = (lang = "en") =>
+  fetchApiDataClient<ServicesResponse>(
+    API_ENDPOINTS.SERVICES,
+    normalizeLanguage(lang)
+  );
 
-export const fetchServices = (lang: string = 'en') => 
-  fetchApiDataClient<ServicesResponse>(API_ENDPOINTS.SERVICES, normalizeLanguage(lang));
-
-// Why Choose Us API
 export interface WhyChooseUsData {
   badge: string;
   heading: string;
   description: string;
-  items: Array<{
-    icon: string;
-    title: string;
-    description: string;
-  }>;
+  items: Array<{ icon: string; title: string; description: string }>;
 }
+export const fetchWhyChooseUs = (lang = "en") =>
+  fetchApiDataClient<{ whyChooseUs: WhyChooseUsData }>(
+    API_ENDPOINTS.WHY_CHOOSE_US,
+    normalizeLanguage(lang)
+  ).then((d) => d?.whyChooseUs ?? null);
 
-export const fetchWhyChooseUs = (lang: string = 'en') => 
-  fetchApiDataClient<{ whyChooseUs: WhyChooseUsData }>(API_ENDPOINTS.WHY_CHOOSE_US, normalizeLanguage(lang))
-    .then(data => data?.whyChooseUs || null);
-
-// Pricing API
 export interface PricingPlan {
   planKey: string;
   name: string;
@@ -225,15 +196,15 @@ export interface PricingPlan {
   features: string[];
   popular?: boolean;
 }
-
 export interface PricingResponse {
   plans: PricingPlan[];
 }
+export const fetchPricing = (lang = "en") =>
+  fetchApiDataClient<PricingResponse>(
+    API_ENDPOINTS.PRICING,
+    normalizeLanguage(lang)
+  );
 
-export const fetchPricing = (lang: string = 'en') => 
-  fetchApiDataClient<PricingResponse>(API_ENDPOINTS.PRICING, normalizeLanguage(lang));
-
-// Testimonials API
 export interface Testimonial {
   _id?: string;
   name: string;
@@ -243,15 +214,15 @@ export interface Testimonial {
   avatar?: string;
   rating: number;
 }
-
 export interface TestimonialsResponse {
   testimonials: Testimonial[];
 }
+export const fetchTestimonials = (lang = "en") =>
+  fetchApiDataClient<TestimonialsResponse>(
+    API_ENDPOINTS.TESTIMONIALS,
+    normalizeLanguage(lang)
+  );
 
-export const fetchTestimonials = (lang: string = 'en') => 
-  fetchApiDataClient<TestimonialsResponse>(API_ENDPOINTS.TESTIMONIALS, normalizeLanguage(lang));
-
-// How It Works API
 export interface Step {
   _id?: string;
   lang: string;
@@ -264,28 +235,28 @@ export interface Step {
   updatedAt?: string;
   metaTitle?: string;
 }
-
 export interface HowItWorksData {
   lang: string;
   steps: Step[];
 }
+export const fetchHowItWorks = (lang = "en") =>
+  fetchApiDataClient<HowItWorksData>(
+    API_ENDPOINTS.HOW_IT_WORKS,
+    normalizeLanguage(lang)
+  ).then((d) => d ?? { lang: normalizeLanguage(lang), steps: [] });
 
-export const fetchHowItWorks = (lang: string = 'en') => 
-  fetchApiDataClient<HowItWorksData>(API_ENDPOINTS.HOW_IT_WORKS, normalizeLanguage(lang))
-    .then(data => data || { lang: normalizeLanguage(lang), steps: [] });
-
-// Final CTA API
 export interface FinalCTAData {
   title: string;
   subtitle: string;
   ctaText: string;
   ctaUrl: string;
 }
+export const fetchFinalCTA = (lang = "en") =>
+  fetchApiDataClient<FinalCTAData>(
+    API_ENDPOINTS.FINAL_CTA,
+    normalizeLanguage(lang)
+  );
 
-export const fetchFinalCTA = (lang: string = 'en') => 
-  fetchApiDataClient<FinalCTAData>(API_ENDPOINTS.FINAL_CTA, normalizeLanguage(lang));
-
-// FAQ API
 export interface FAQItem {
   _id?: string;
   question: string;
@@ -293,15 +264,12 @@ export interface FAQItem {
   category?: string;
   order: number;
 }
-
 export interface FAQResponse {
   faqs: FAQItem[];
 }
-
-export const fetchFAQ = (lang: string = 'en') => 
+export const fetchFAQ = (lang = "en") =>
   fetchApiDataClient<FAQResponse>(API_ENDPOINTS.FAQ, normalizeLanguage(lang));
 
-// Case Studies API
 export interface CaseStudy {
   _id?: string;
   title: string;
@@ -311,18 +279,20 @@ export interface CaseStudy {
   link?: string;
   order: number;
 }
-
 export interface CaseStudiesResponse {
   caseStudies: CaseStudy[];
 }
+export const fetchCaseStudies = (lang = "en") =>
+  fetchApiDataClient<CaseStudiesResponse>(
+    API_ENDPOINTS.CASE_STUDIES,
+    normalizeLanguage(lang)
+  );
+export const fetchCaseStudiesServer = (lang = "en") =>
+  fetchApiData<CaseStudiesResponse>(
+    API_ENDPOINTS.CASE_STUDIES,
+    normalizeLanguage(lang)
+  );
 
-export const fetchCaseStudies = (lang: string = 'en') => 
-  fetchApiDataClient<CaseStudiesResponse>(API_ENDPOINTS.CASE_STUDIES, normalizeLanguage(lang));
-
-export const fetchCaseStudiesServer = (lang: string = 'en') =>
-  fetchApiData<CaseStudiesResponse>(API_ENDPOINTS.CASE_STUDIES, normalizeLanguage(lang));
-
-// Blog API
 export interface BlogPost {
   blogId: number;
   title: string;
@@ -333,12 +303,11 @@ export interface BlogPost {
   publishedAt: string;
   slug: string;
 }
-
 export interface BlogResponse {
   posts: BlogPost[];
 }
-
-export const fetchBlog = (lang: string = 'en') => 
-  fetchApiDataClient<BlogResponse>(API_ENDPOINTS.BLOGS, normalizeLanguage(lang));
-
-
+export const fetchBlog = (lang = "en") =>
+  fetchApiDataClient<BlogResponse>(
+    API_ENDPOINTS.BLOGS,
+    normalizeLanguage(lang)
+  );

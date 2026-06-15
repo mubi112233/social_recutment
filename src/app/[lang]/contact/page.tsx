@@ -4,6 +4,7 @@ import ContactClient from "./ContactClient";
 import { absoluteUrl, hreflangAlternates, publicLocalePathSegment } from "@/lib/site-url";
 import { generateBreadcrumbSchema } from "@/lib/structured-data";
 
+export const dynamic = "force-dynamic";
 const SUPPORTED_LANGS = ["en", "ge", "de"];
 
 export async function generateMetadata({

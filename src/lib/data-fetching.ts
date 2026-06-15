@@ -3,7 +3,7 @@
  * Fetches all data in parallel for optimal performance
  */
 
-import { fetchAPI, API_ENDPOINTS, normalizeLanguage } from './api';
+import { fetchAPI, fetchAPIClient, API_ENDPOINTS, normalizeLanguage } from './api';
 import type { Service, FAQItem } from './api';
 
 export interface CaseStudyCard {
@@ -199,11 +199,14 @@ const fallbackCaseStudies: CaseStudyCard[] = [
 ];
 
 export async function fetchCaseStudiesCardsData(lang: string): Promise<CaseStudyCard[]> {
+  // Use fetchAPIClient so this works correctly when called from client components
+  // (avoids AbortController timeout cancelling in-flight requests on the browser).
+  const fetcher = typeof window === 'undefined' ? fetchAPI : fetchAPIClient;
   try {
     const normalizedLang = normalizeLanguage(lang);
     let response: Response;
     try {
-      response = await fetchAPI(`${API_ENDPOINTS.CASE_STUDIES}?lang=${normalizedLang}`);
+      response = await fetcher(`${API_ENDPOINTS.CASE_STUDIES}?lang=${normalizedLang}`);
     } catch {
       return fallbackCaseStudies;
     }
