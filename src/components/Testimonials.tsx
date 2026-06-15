@@ -162,7 +162,7 @@ export const Testimonials = () => {
             </span>
             <h3 
               className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-foreground"
-              dangerouslySetInnerHTML={{ __html: copy.caseStudy?.title }}
+              dangerouslySetInnerHTML={{ __html: copy.caseStudy?.title ?? "" }}
             />
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-5 sm:mb-6 leading-relaxed max-w-3xl">
               {copy.caseStudy?.description}

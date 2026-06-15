@@ -81,17 +81,12 @@ const plans: PricingPlan[] = [
 
 export const Pricing = () => {
   const [vaCount, setVaCount] = useState(1);
-  
-  const getLangFromPath = () => {
-    const match = window.location.pathname.match(/^\/(en|ge|de)\b/i);
-    const raw = match?.[1]?.toLowerCase() || "en";
-    return raw === "de" ? "ge" : raw;
-  };
-
   const [currentLang, setCurrentLang] = useState<string>("en");
 
   useEffect(() => {
-    setCurrentLang(getLangFromPath());
+    const match = window.location.pathname.match(/^\/(en|ge|de)\b/i);
+    const raw = match?.[1]?.toLowerCase() || "en";
+    setCurrentLang(raw === "de" ? "ge" : raw);
   }, []);
 
   const copy = getCopy(currentLang, 'pricing');
@@ -428,7 +423,7 @@ export const Pricing = () => {
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       plan.highlighted ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-primary/10 text-primary'
                     }`}>
-                      {parseInt(plan.hours)} {copy.hoursUnit}
+                      {plan.hours} {copy.hoursUnit}
                     </span>
                   </div>
                 </div>

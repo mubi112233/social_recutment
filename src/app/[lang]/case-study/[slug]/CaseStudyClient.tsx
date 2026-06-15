@@ -18,10 +18,12 @@ export default function CaseStudyClient({ lang }: { lang: string }) {
 
   useEffect(() => {
     const id = Number(slug.split("-").pop());
-    fetchCaseStudiesCardsData(lang).then((studies) => {
-      setStudy(isNaN(id) ? null : studies.find((s) => s.id === id) ?? null);
-      setLoading(false);
-    });
+    fetchCaseStudiesCardsData(lang)
+      .then((studies) => {
+        setStudy(isNaN(id) ? null : studies.find((s) => s.id === id) ?? null);
+      })
+      .catch(() => setStudy(null))
+      .finally(() => setLoading(false));
   }, [lang, slug]);
 
   if (loading) {

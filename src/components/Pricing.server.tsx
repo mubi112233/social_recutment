@@ -213,7 +213,7 @@ export async function Pricing({ lang }: { lang: string }) {
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       plan.highlighted ? 'bg-white/20 text-white' : 'bg-[hsl(270,80%,65%)]/20 text-[hsl(270,80%,85%)]'
                     }`}>
-                      {parseInt(plan.hours)} {copy.hoursUnit}
+                      {plan.hours} {copy.hoursUnit}
                     </span>
                   </div>
                 </div>

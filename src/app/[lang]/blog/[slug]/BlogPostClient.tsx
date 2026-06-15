@@ -57,11 +57,13 @@ export default function BlogPostClient({ lang }: { lang: string }) {
   const isGe = lang === "ge";
 
   useEffect(() => {
-    fetchBlog(lang).then((data) => {
-      const posts = extractPosts(data);
-      setPost(findPost(posts, slug));
-      setLoading(false);
-    });
+    fetchBlog(lang)
+      .then((data) => {
+        const posts = extractPosts(data);
+        setPost(findPost(posts, slug));
+      })
+      .catch(() => setPost(null))
+      .finally(() => setLoading(false));
   }, [lang, slug]);
 
   const handleShare = async () => {
@@ -69,9 +71,13 @@ export default function BlogPostClient({ lang }: { lang: string }) {
     if (navigator.share) {
       try { await navigator.share({ title: post?.title, text: post?.excerpt, url }); } catch {}
     } else {
-      navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // clipboard API unavailable (HTTP, old browser) — silent fail
+      }
     }
   };
 
