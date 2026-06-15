@@ -11,23 +11,35 @@ import {
   type TokenContextValue,
 } from "./design-tokens-core";
 
+function loadTokensFromStorage(): Tokens {
+  // Guard: localStorage is only available in the browser
+  if (typeof window === "undefined") return DEFAULT_TOKENS;
+  try {
+    localStorage.removeItem("design-theme");
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_TOKENS;
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeStoredTokens(parsed);
+    return { ...DEFAULT_TOKENS, ...normalized } as Tokens;
+  } catch {
+    return DEFAULT_TOKENS;
+  }
+}
+
 export function DesignTokensProvider({ children }: { children: React.ReactNode }) {
-  const [tokens, setTokensState] = useState<Tokens>(() => {
-    try {
-      // Clean up old design-system provider cache
-      localStorage.removeItem("design-theme");
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return DEFAULT_TOKENS;
-      const parsed = JSON.parse(raw);
-      const normalized = normalizeStoredTokens(parsed);
-      return { ...DEFAULT_TOKENS, ...normalized } as Tokens;
-    } catch {
-      void 0;
-      return DEFAULT_TOKENS;
-    }
-  });
+  // Start with DEFAULT_TOKENS on server; load from storage after mount to avoid hydration mismatch
+  const [tokens, setTokensState] = useState<Tokens>(DEFAULT_TOKENS);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Only runs in the browser — safe to access localStorage and document
+    const stored = loadTokensFromStorage();
+    setTokensState(stored);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     // Clean up any inline style overrides from old DesignSystemProvider
     const root = document.documentElement;
     const oldVars = [
@@ -45,7 +57,7 @@ export function DesignTokensProvider({ children }: { children: React.ReactNode }
     } catch {
       void 0;
     }
-  }, [tokens]);
+  }, [tokens, mounted]);
 
   const api = useMemo<TokenContextValue>(
     () => ({
